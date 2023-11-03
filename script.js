@@ -8,11 +8,10 @@ const inputDuration = document.querySelector('.form__input--duration');
 const inputCadence = document.querySelector('.form__input--cadence');
 const inputElevation = document.querySelector('.form__input--elevation');
 
-//**Managing workout data */
-
 class Workout {
   date = new Date();
   id = (Date.now() + '').slice(-10);
+  clicks = 0;
   constructor(coords, distance, duration) {
     this.coords = coords;
     this.distance = distance;
@@ -27,6 +26,10 @@ class Workout {
     this.description = `${this.type[0].toUpperCase()}${this.type.slice(1)} on ${
       months[this.date.getMonth()]
     } ${this.date.getDate()}`;
+  }
+
+  click() {
+    this.clicks++;
   }
 }
 
@@ -57,14 +60,17 @@ class Cycling extends Workout {
     this.speed = (this.distance / (this.duration / 60)).toFixed(1);
   }
 }
+/**--------------------------------------------------------------------------------------- */
 class MaptyApp {
   #map;
   #mapEvent;
+  #mapZoom = 14;
   #workouts = [];
   constructor() {
     this._getPosition();
     form.addEventListener('submit', this._newWorkout.bind(this));
     inputType.addEventListener('change', this._toggleElevationField);
+    containerWorkouts.addEventListener('click', this._moveToPopUp.bind(this));
   }
   _getPosition() {
     if (navigator.geolocation) {
@@ -79,7 +85,7 @@ class MaptyApp {
 
   _loadMap(position) {
     const { latitude, longitude } = position.coords;
-    this.#map = L.map('map').setView([latitude, longitude], 15);
+    this.#map = L.map('map').setView([latitude, longitude], this.#mapZoom);
 
     L.tileLayer('https://tile.openstreetmap.fr/hot/{z}/{x}/{y}.png', {
       attribution:
@@ -114,9 +120,24 @@ class MaptyApp {
     inputCadence.closest('.form__row').classList.toggle('form__row--hidden');
   }
 
+  _moveToPopUp(e) {
+    const workoutEl = e.target.closest('.workout');
+    if (!workoutEl) return;
+    const workout = this.#workouts.find(
+      workout => workout.id === workoutEl.dataset.id
+    );
+    /**To move the view to target marker */
+    this.#map.setView(workout.coords, this.#mapZoom, {
+      animate: true,
+      pan: {
+        duration: 1,
+      },
+    });
+    workout.click();
+  }
+
   _newWorkout(e) {
     e.preventDefault();
-    //1- Get data from form
     let workout;
     const type = inputType.value;
     const distance = +inputDistance.value;
@@ -137,8 +158,6 @@ class MaptyApp {
     this.#workouts.push(workout);
     this._renderWorkoutMarker(workout);
     this._renderWork(workout);
-
-    //7- Clear input fields
     this._hideForm();
     this._clearFormInputField();
   }
@@ -173,7 +192,6 @@ class MaptyApp {
       )
       .openPopup();
   }
-  //**Render workout */
   _renderWork(workout) {
     let html = `
     <li class="workout workout--${workout.type}" data-id="${workout.id}">
