@@ -73,6 +73,11 @@ class MaptyApp {
         '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
     }).addTo(this.#map);
 
+    this._displayCurrentLocationMarker(latitude, longitude);
+    this.#map.on('click', this._showForm.bind(this));
+  }
+
+  _displayCurrentLocationMarker(latitude, longitude) {
     L.marker([latitude, longitude])
       .addTo(this.#map)
       .bindPopup('Current Location', {
@@ -83,9 +88,6 @@ class MaptyApp {
         className: 'running-popup',
       })
       .openPopup();
-
-    /**Handling clicks on map */
-    this.#map.on('click', this._showForm.bind(this));
   }
 
   _showForm(mapE) {
@@ -100,8 +102,25 @@ class MaptyApp {
   }
 
   _newWorkout(e) {
-    /**Display marker */
     e.preventDefault();
+    //1- Get data from form
+
+    //2-Check if data is valid
+
+    //3- Create running or cycling workout depending on type
+
+    //4- add new object to workout array
+
+    //5- Render workout on map as marker
+    this._addMarkerToMap();
+
+    //6- Render workout on list
+
+    //7- Clear input fields
+    this._clearFormInputField();
+  }
+
+  _addMarkerToMap() {
     const { lat, lng } = this.#mapEvent.latlng;
     L.marker([lat, lng])
       .addTo(this.#map)
@@ -113,8 +132,9 @@ class MaptyApp {
         className: 'running-popup',
       })
       .openPopup();
+  }
 
-    /**clear fields after submission */
+  _clearFormInputField() {
     inputDistance.value =
       inputDuration.value =
       inputCadence.value =
