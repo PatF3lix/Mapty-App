@@ -17,7 +17,6 @@ if (navigator.geolocation) {
       const { latitude, longitude } = position.coords;
       const map = L.map('map').setView([latitude, longitude], 15);
 
-      /**The map is made out of titles */
       L.tileLayer('https://tile.openstreetmap.fr/hot/{z}/{x}/{y}.png', {
         attribution:
           '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
@@ -27,6 +26,20 @@ if (navigator.geolocation) {
         .addTo(map)
         .bindPopup('Current Location')
         .openPopup();
+
+      map.on('click', function (mapEvent) {
+        const { lat, lng } = mapEvent.latlng;
+        L.marker([lat, lng])
+          .addTo(map)
+          .bindPopup('Workout', {
+            maxWidth: 250,
+            minWidth: 100,
+            autoClose: false,
+            closeOnClick: false,
+            className: 'running-popup',
+          })
+          .openPopup();
+      });
     },
     function () {
       alert('Could not get your position');
