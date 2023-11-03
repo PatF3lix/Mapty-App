@@ -64,4 +64,18 @@ form.addEventListener('submit', function (e) {
       className: 'running-popup',
     })
     .openPopup();
+
+  /**clear fields after submission */
+  inputDistance.value =
+    inputDuration.value =
+    inputCadence.value =
+    inputElevation.value =
+      '';
+  inputDistance.focus();
+});
+
+/**change between forms running and cycling */
+inputType.addEventListener('change', function () {
+  inputElevation.closest('.form__row').classList.toggle('form__row--hidden');
+  inputCadence.closest('.form__row').classList.toggle('form__row--hidden');
 });
