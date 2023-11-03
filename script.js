@@ -28,9 +28,9 @@ class Workout {
     } ${this.date.getDate()}`;
   }
 
-  click() {
-    this.clicks++;
-  }
+  //   click() {
+  //     this.clicks++;
+  //   }
 }
 
 class Running extends Workout {
@@ -42,7 +42,6 @@ class Running extends Workout {
     this.calcPace();
   }
   calcPace() {
-    /* min/km */
     this.pace = (this.duration / this.distance).toFixed(1);
     return this.pase;
   }
@@ -64,14 +63,16 @@ class Cycling extends Workout {
 class MaptyApp {
   #map;
   #mapEvent;
-  #mapZoom = 14;
+  #mapZoom = 15;
   #workouts = [];
   constructor() {
     this._getPosition();
+    this._getLocalStorage();
     form.addEventListener('submit', this._newWorkout.bind(this));
     inputType.addEventListener('change', this._toggleElevationField);
     containerWorkouts.addEventListener('click', this._moveToPopUp.bind(this));
   }
+
   _getPosition() {
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
@@ -107,6 +108,9 @@ class MaptyApp {
         className: 'running-popup',
       })
       .openPopup();
+    this.#workouts.forEach(workout => {
+      this._renderWorkoutMarker(workout);
+    });
   }
 
   _showForm(mapE) {
@@ -126,14 +130,13 @@ class MaptyApp {
     const workout = this.#workouts.find(
       workout => workout.id === workoutEl.dataset.id
     );
-    /**To move the view to target marker */
     this.#map.setView(workout.coords, this.#mapZoom, {
       animate: true,
       pan: {
         duration: 1,
       },
     });
-    workout.click();
+    // workout.click();
   }
 
   _newWorkout(e) {
@@ -157,9 +160,11 @@ class MaptyApp {
 
     this.#workouts.push(workout);
     this._renderWorkoutMarker(workout);
-    this._renderWork(workout);
+    this._renderWorkout(workout);
     this._hideForm();
     this._clearFormInputField();
+    //Set local storage to all workouts
+    this._setLocalStorage();
   }
   _createWorkout(type, stats) {
     const { lat, lng } = this.#mapEvent.latlng;
@@ -177,7 +182,7 @@ class MaptyApp {
   }
 
   _renderWorkoutMarker(workout) {
-    const { lat, lng } = this.#mapEvent.latlng;
+    const [lat, lng] = workout.coords;
     L.marker([lat, lng])
       .addTo(this.#map)
       .bindPopup(
@@ -192,7 +197,7 @@ class MaptyApp {
       )
       .openPopup();
   }
-  _renderWork(workout) {
+  _renderWorkout(workout) {
     let html = `
     <li class="workout workout--${workout.type}" data-id="${workout.id}">
           <h2 class="workout__title">${workout.description}</h2>
@@ -249,6 +254,28 @@ class MaptyApp {
       inputElevation.value =
         '';
     inputDistance.focus();
+  }
+
+  _setLocalStorage() {
+    /**localStorage is an API provided by the broswer, advised to use for small amounts of data */
+    /**To view the locate storage, open Inspect -> Application->localstorage*/
+    /**Works as a key/value pair */
+    localStorage.setItem('workouts', JSON.stringify(this.#workouts));
+  }
+
+  _getLocalStorage() {
+    const data = JSON.parse(localStorage.getItem('workouts'));
+    if (!data) return; //check if there is data
+    this.#workouts = data; //insert data inside array
+    this.#workouts.forEach(workout => this._renderWorkout(workout)); //render each data element into a workout htlm element
+  }
+
+  /**This function is added in order to clear the data from the local storage from the console.
+   *  'app.reset()' */
+  reset() {
+    localStorage.removeItem('workouts');
+    //reloads the page
+    location.reload();
   }
 }
 
