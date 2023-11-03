@@ -22,6 +22,7 @@ class Workout {
 }
 
 class Running extends Workout {
+  type = 'running';
   constructor(coords, distance, duration, cadence) {
     super(coords, distance, duration);
     this.cadence = cadence;
@@ -35,6 +36,7 @@ class Running extends Workout {
 }
 
 class Cycling extends Workout {
+  type = 'cycling';
   constructor(coords, distance, duration, elevationGain) {
     super(coords, distance, duration);
     this.elevationGain = elevationGain;
@@ -44,15 +46,16 @@ class Cycling extends Workout {
     this.speed = this.distance / (this.duration / 60);
   }
 }
-
 class MaptyApp {
   #map;
   #mapEvent;
+  #workouts = [];
   constructor() {
     this._getPosition();
     form.addEventListener('submit', this._newWorkout.bind(this));
     inputType.addEventListener('change', this._toggleElevationField);
   }
+
   _getPosition() {
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
@@ -104,23 +107,55 @@ class MaptyApp {
   _newWorkout(e) {
     e.preventDefault();
     //1- Get data from form
+    let workout;
+    const type = inputType.value;
+    const distance = +inputDistance.value;
+    const duration = +inputDuration.value;
 
-    //2-Check if data is valid
-
-    //3- Create running or cycling workout depending on type
+    if (type === 'running') {
+      const cadence = +inputCadence.value;
+      //2-Check if data is valid
+      if (!this._validateUserInput(distance, duration, cadence))
+        return alert('Inputs have to be positive numbers!');
+      //3- Create running workout
+      workout = this._createWorkout('running', [distance, duration, cadence]);
+    } else {
+      const elevation = +inputElevation.value;
+      //2-Check if data is valid
+      if (!this._validateUserInput(distance, duration, elevation))
+        return alert('Inputs have to be positive numbers!');
+      //3- Create cycling workout
+      workout = this._createWorkout('cycling', [distance, duration, elevation]);
+    }
 
     //4- add new object to workout array
-
+    this.#workouts.push(workout);
     //5- Render workout on map as marker
-    this._addMarkerToMap();
+    this._renderWorkoutMarker(workout);
 
     //6- Render workout on list
 
     //7- Clear input fields
     this._clearFormInputField();
   }
+  _createWorkout(type, stats) {
+    const { lat, lng } = this.#mapEvent.latlng;
+    let workout;
+    if (type === 'running') {
+      workout = new Running([lat, lng], ...stats);
+    } else {
+      workout = new Cycling([lat, lng], ...stats);
+    }
+    return workout;
+  }
 
-  _addMarkerToMap() {
+  /**receives an array, traverse the array an returns only at the end of the iteration,
+   *  true or false */
+  _validateUserInput(...inputs) {
+    return inputs.every(inp => Number.isFinite(inp) && inp > 0);
+  }
+
+  _renderWorkoutMarker(workout) {
     const { lat, lng } = this.#mapEvent.latlng;
     L.marker([lat, lng])
       .addTo(this.#map)
@@ -129,7 +164,7 @@ class MaptyApp {
         minWidth: 100,
         autoClose: false,
         closeOnClick: false,
-        className: 'running-popup',
+        className: `${workout.type}-popup`,
       })
       .openPopup();
   }
