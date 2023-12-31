@@ -1,6 +1,6 @@
 # Mapty App
 
-Description: Geolocation Javscript App
+Description: Geolocation Javascript App
  
 Author and references:
 
